@@ -3,186 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智適應速算系統 - 正式 POC 版</title>
+    <title>CLASSROOM SIGNAL / LIVE</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; background-color: #f4f7f6; color: #333; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background-color: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 550px; text-align: center; }
-        .hidden { display: none !important; }
-        .role-btn { display: block; width: 100%; padding: 15px; margin: 15px 0; font-size: 1.2em; background-color: #f8f9fa; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: 0.3s; }
-        .role-btn:hover { border-color: #3498db; background-color: #ebf5fb; }
-        .level-badge { background-color: #3498db; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.9em; margin-bottom: 20px; display: inline-block; }
-        .question-box { font-size: 2.5em; font-weight: bold; margin: 20px 0; color: #2c3e50; }
-        input[type="number"] { font-size: 1.5em; padding: 10px; width: 60%; text-align: center; border: 2px solid #bdc3c7; border-radius: 8px; margin-bottom: 15px; }
-        button.action-btn { font-size: 1.1em; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; color: white; margin: 5px; }
-        .btn-submit { background-color: #2ecc71; }
-        .btn-back { background-color: #95a5a6; }
-        .feedback { margin-top: 20px; font-size: 1.1em; min-height: 50px; }
-        .correct { color: #27ae60; font-weight: bold; }
-        .wrong { color: #e74c3c; font-weight: bold; }
-        .hint { color: #d35400; font-size: 0.95em; margin-top: 10px; background: #fdfae6; padding: 12px; border-radius: 5px; text-align: left; }
-        .alert-item { background-color: #fbeeee; border-left: 5px solid #e74c3c; padding: 15px; margin-bottom: 12px; text-align: left;}
-        .timer { font-size: 0.9em; color: #7f8c8d; margin-top: 10px; }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { margin: 0; background-color: #1a1f35; color: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        
+        /* 頂部橘色邊條 */
+        .top-bar { position: absolute; top: 0; left: 0; width: 100%; height: 6px; background-color: #f3704b; }
+        
+        .main-container { width: 1100px; padding: 30px; display: flex; flex-direction: column; gap: 20px; }
+        
+        /* 標題區 */
+        .header h1 { margin: 0; font-size: 20px; letter-spacing: 1px; font-weight: 700; text-transform: uppercase; }
+        .header p { margin: 5px 0 0 0; font-size: 14px; color: #8f95b2; }
+        
+        .dashboard-grid { display: flex; gap: 20px; align-items: stretch; }
+        
+        /* 左側：學生筆跡預覽區 */
+        .left-panel { flex: 1; background-color: #272f4b; border-radius: 12px; border: 1px solid #364061; padding: 25px; position: relative; display: flex; flex-direction: column; }
+        .status-badge { position: absolute; top: 20px; right: 20px; background-color: #f3704b; color: white; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: bold; opacity: 0; transition: opacity 0.3s; }
+        .status-badge.active { opacity: 1; }
+        
+        .preview-title { color: #a4abbe; font-size: 15px; margin-bottom: 30px; }
+        .equation-area { font-size: 24px; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; margin-top: 20px; }
+        
+        /* 輸入框完美融入背景 */
+        input[type="number"] { background: transparent; border: none; border-bottom: 2px solid #f3704b; color: #f3704b; font-size: 26px; width: 100px; text-align: center; outline: none; padding: 0 5px; font-weight: bold; }
+        /* 模擬游標閃爍 */
+        .cursor-indicator { color: #f3704b; font-size: 20px; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* 右側：數據與警報區 */
+        .right-panel { width: 450px; display: flex; flex-direction: column; gap: 15px; }
+        .data-stream-title { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stat-card { background-color: #1e2439; border-radius: 8px; padding: 15px; }
+        .stat-title { color: #8f95b2; font-size: 12px; margin-bottom: 8px; }
+        .stat-value { font-size: 24px; font-weight: bold; }
+        .text-orange { color: #f3704b; }
+        
+        /* 底部白色預警卡片 */
+        .alert-card { background-color: #ffffff; border-radius: 12px; padding: 25px; color: #333; flex-grow: 1; display: flex; flex-direction: column; opacity: 0.3; transition: opacity 0.3s; }
+        .alert-card.active { opacity: 1; }
+        .alert-title { color: #e74c3c; font-size: 16px; font-weight: bold; margin-bottom: 12px; margin-top: 0; }
+        .alert-desc { font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 15px; }
+        .alert-hint { font-size: 14px; font-weight: bold; color: #111; }
     </style>
 </head>
 <body>
-
-<!-- 登入選擇 -->
-<div class="container" id="login-view">
-    <h2>智適應速算系統 Demo</h2>
-    <button class="role-btn" onclick="switchView('student-view')">👨‍🎓 進入「學生練習端」</button>
-    <button class="role-btn" onclick="switchView('teacher-dashboard')">👨‍🏫 進入「教師異常雷達」</button>
-</div>
-
-<!-- 學生端 -->
-<div class="container hidden" id="student-view">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span class="level-badge" id="level-display" style="margin:0;">目前難度: 基礎雙位數</span>
-        <button class="action-btn btn-back" style="padding: 5px 10px;" onclick="switchView('login-view')">登出</button>
+    <div class="top-bar"></div>
+    <div class="main-container">
+        <div class="header">
+            <h1>CLASSROOM SIGNAL / LIVE</h1>
+            <p id="sub-header">Q1 · 乘減混合計算 (錯誤率: 0%)</p>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- 左側：學生答題實況 -->
+            <div class="left-panel">
+                <div class="status-badge" id="top-badge">偵測到思考滯留中...</div>
+                <div class="preview-title">[學生筆跡軌跡預覽]</div>
+                <div class="equation-area">
+                    <span id="q-text">13 × 8 - 13 × 5</span> = <input type="number" id="ans-input" oninput="checkRealTime()" onkeypress="if(event.key==='Enter') submitAnswer()"> <span class="cursor-indicator">|</span>
+                </div>
+                <p style="margin-top:40px; color:#5c6585; font-size:13px;">* 於橫線輸入答案並按 Enter 提交</p>
+            </div>
+            
+            <!-- 右側：監測數據流 -->
+            <div class="right-panel">
+                <div class="data-stream-title">AI 實時監測數據流</div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-title">連續答對 (Streak)</div>
+                        <div class="stat-value" id="stat-streak">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">當前思考停頓</div>
+                        <div class="stat-value text-orange" id="stat-time">0.0 秒</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">累積答錯次數</div>
+                        <div class="stat-value" id="stat-mistakes">0 次</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">當前難度評級</div>
+                        <div class="stat-value text-orange" id="stat-level">Level 1</div>
+                    </div>
+                </div>
+                
+                <!-- 預警提示框 -->
+                <div class="alert-card" id="alert-box">
+                    <h3 class="alert-title" id="alert-title">認知阻塞預警</h3>
+                    <div class="alert-desc" id="alert-desc">等待數據分析中...</div>
+                    <div class="alert-hint" id="alert-hint"></div>
+                </div>
+            </div>
+        </div>
     </div>
-    
-    <div class="question-box" id="question-text">載入中...</div>
-    
-    <input type="number" id="answer-input" placeholder="請輸入答案" onkeypress="if(event.key==='Enter') checkAnswer()">
-    <br>
-    <button class="action-btn btn-submit" onclick="checkAnswer()">提交答案</button>
-    
-    <div class="timer" id="timer-display">作答計時中...</div>
-    <div class="feedback" id="feedback-area"></div>
-</div>
-
-<!-- 教師端 -->
-<div class="container hidden" id="teacher-dashboard">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="margin: 0;">📊 教師異常雷達</h2>
-        <button class="action-btn btn-back" style="padding: 5px 10px;" onclick="switchView('login-view')">登出</button>
-    </div>
-    <h4 style="color: #2c3e50; text-align: left;">⚠️ 系統自動標記名單：</h4>
-    <div id="alerts-area"></div>
-</div>
 
 <script>
-    let currentLevel = 1; // 1: 基礎, 2: 挑戰
+    let currentLevel = 1; 
     let streak = 0;
     let mistakes = 0;
-    let currentCorrectAnswer = 0;
-    let currentType = 0;
-    let currentQText = "";
-    let teacherAlerts = [];
-    let startTime;
+    let totalMistakes = 0;
+    let correctAnswer = 0;
+    let currentType = 1; // 預設先出 13x8-13x5
+    let startTime = Date.now();
     let timerInterval;
 
-    function switchView(viewId) {
-        document.querySelectorAll('.container').forEach(c => c.classList.add('hidden'));
-        document.getElementById(viewId).classList.remove('hidden');
-        if (viewId === 'student-view') generateQuestion();
-        if (viewId === 'teacher-dashboard') updateTeacherDashboard();
-    }
+    const ui = {
+        qText: document.getElementById('q-text'),
+        input: document.getElementById('ans-input'),
+        time: document.getElementById('stat-time'),
+        streak: document.getElementById('stat-streak'),
+        mistakes: document.getElementById('stat-mistakes'),
+        level: document.getElementById('stat-level'),
+        badge: document.getElementById('top-badge'),
+        alertBox: document.getElementById('alert-box'),
+        alertTitle: document.getElementById('alert-title'),
+        alertDesc: document.getElementById('alert-desc'),
+        alertHint: document.getElementById('alert-hint')
+    };
 
     function startTimer() {
         startTime = Date.now();
         clearInterval(timerInterval);
         timerInterval = setInterval(() => {
-            let seconds = Math.floor((Date.now() - startTime) / 1000);
-            document.getElementById('timer-display').innerText = `已用時: ${seconds} 秒`;
-        }, 1000);
+            let elapsed = (Date.now() - startTime) / 1000;
+            ui.time.innerText = elapsed.toFixed(1) + ' 秒';
+            
+            // 實作痛點 3：耗時超過 15 秒觸發預警
+            if (elapsed > 15 && document.activeElement === ui.input) {
+                triggerAlert('作答耗時過長預警', '學生在當前題目停頓超過 15 秒，可能未掌握速算技巧。', '建議介入觀察，或給予方向引導。');
+                ui.badge.innerText = '偵測到思考滯留中...';
+                ui.badge.classList.add('active');
+            }
+        }, 100);
     }
 
     function generateQuestion() {
-        document.getElementById('feedback-area').innerHTML = "";
-        document.getElementById('answer-input').value = '';
-        document.getElementById('answer-input').focus();
+        ui.input.value = '';
+        ui.input.focus();
+        hideAlert();
         startTimer();
 
-        // 隨機決定題型：0為乘加，1為乘減，2為99乘法
-        currentType = Math.floor(Math.random() * 3);
+        // 輪替三種題型展示功能
+        currentType = (currentType + 1) % 3;
 
         if (currentType === 0) {
-            // 【滿足要求 1：動態生成無限組 A × B + A × C】
+            // 無限題庫 A x B + A x C
             let a = Math.floor(Math.random() * 8) + 2;
             let b = Math.floor(Math.random() * 9) + 1;
             let c = 10 - b;
-            currentQText = `${a} × ${b} + ${a} × ${c}`;
-            currentCorrectAnswer = a * (b + c);
+            ui.qText.innerText = `${a} × ${b} + ${a} × ${c}`;
+            correctAnswer = a * (b + c);
         } else if (currentType === 1) {
-            // 【滿足要求 2：梯級式自適應 - 乘減混合】
+            // 自適應梯級：乘減
             if (currentLevel === 1) {
-                // 基礎題雙位數 (如 13 × 8 - 13 × 5)
-                let a = 13; let b = 8; let c = 5;
-                currentQText = `${a} × ${b} - ${a} × ${c}`;
-                currentCorrectAnswer = a * (b - c);
+                ui.qText.innerText = `13 × 8 - 13 × 5`;
+                correctAnswer = 13 * (8 - 5);
             } else {
-                // 升級百位數 (如 123 × 125 - 43 × 125)
-                let a = 125; let b = 123; let c = 43;
-                currentQText = `${b} × ${a} - ${c} × ${a}`;
-                currentCorrectAnswer = a * (b - c);
+                ui.qText.innerText = `123 × 125 - 43 × 125`;
+                correctAnswer = 125 * (123 - 43);
             }
         } else {
-            // 特定題型：99 × 某數
-            let a = 15;
-            currentQText = `99 × ${a}`;
-            currentCorrectAnswer = 99 * a;
+            // 特定 99 乘法
+            ui.qText.innerText = `99 × 15`;
+            correctAnswer = 99 * 15;
         }
-        document.getElementById('question-text').innerText = currentQText;
     }
 
-    function checkAnswer() {
-        clearInterval(timerInterval);
-        let timeTaken = Math.floor((Date.now() - startTime) / 1000);
-        let inputVal = document.getElementById('answer-input').value;
-        if (inputVal === "") return;
+    function checkRealTime() {
+        // 使用者輸入時隱藏滯留標籤
+        if(ui.badge.innerText === '偵測到思考滯留中...') {
+            ui.badge.classList.remove('active');
+        }
+    }
+
+    function triggerAlert(title, desc, hint, isCritical = false) {
+        ui.alertBox.classList.add('active');
+        ui.alertTitle.innerText = title;
+        ui.alertDesc.innerText = desc;
+        ui.alertHint.innerText = '建議點撥：「' + hint + '」';
         
-        let userAnswer = parseInt(inputVal);
-        let feedback = document.getElementById('feedback-area');
-
-        // 【滿足要求 3：耗時過長偵測 (超過15秒)】
-        if (timeTaken > 15) {
-            let alertMsg = `⏱️ 學生在題型 [${currentQText}] 耗時過長 (${timeTaken}秒)。`;
-            if (!teacherAlerts.includes(alertMsg)) teacherAlerts.push(alertMsg);
+        if(isCritical) {
+            ui.alertTitle.style.color = '#c0392b';
+            ui.alertBox.style.border = '2px solid #e74c3c';
+        } else {
+            ui.alertTitle.style.color = '#e74c3c';
+            ui.alertBox.style.border = 'none';
         }
+    }
 
-        if (userAnswer === currentCorrectAnswer) {
-            streak++; mistakes = 0;
-            feedback.innerHTML = `<span class="correct">✅ 答對了！(用時 ${timeTaken} 秒)</span>`;
+    function hideAlert() {
+        ui.alertBox.classList.remove('active');
+        ui.badge.classList.remove('active');
+    }
+
+    function submitAnswer() {
+        let ans = parseInt(ui.input.value);
+        if (isNaN(ans)) return;
+
+        if (ans === correctAnswer) {
+            streak++;
+            mistakes = 0;
+            ui.streak.innerText = streak;
             
-            // 【滿足要求 2：自動升級挑戰】
+            // 實作痛點 2：自適應升級
             if (streak >= 2 && currentLevel === 1) {
-                currentLevel = 2; streak = 0;
-                feedback.innerHTML += `<br><span class="correct">🌟 表現優異！題目自動提升至百位數挑戰</span>`;
-                let lvlBadge = document.getElementById('level-display');
-                lvlBadge.innerText = "目前難度: 挑戰百位數";
-                lvlBadge.style.backgroundColor = "#9b59b6";
+                currentLevel = 2;
+                streak = 0;
+                ui.streak.innerText = streak;
+                ui.level.innerText = 'Level 2 (進階)';
+                
+                ui.badge.innerText = '難度自動升階中...';
+                ui.badge.classList.add('active');
+                setTimeout(() => ui.badge.classList.remove('active'), 2000);
             }
-            setTimeout(generateQuestion, 1500);
+            generateQuestion();
         } else {
-            streak = 0; mistakes++;
-            
-            // 【滿足要求 3：連續答錯 3 次偵測】
+            streak = 0;
+            mistakes++;
+            totalMistakes++;
+            ui.streak.innerText = streak;
+            ui.mistakes.innerText = totalMistakes + ' 次';
+
+            ui.badge.innerText = '答題錯誤';
+            ui.badge.classList.add('active');
+
+            // 實作痛點 3：連錯 3 次精準標記
             if (mistakes >= 3) {
-                let alertMsg = `❌ 學生在目前階段連續答錯 3 次，需老師協助跟進。`;
-                if (!teacherAlerts.includes(alertMsg)) teacherAlerts.push(alertMsg);
+                triggerAlert('高風險阻塞預警 (連錯3次)', '學生在此知識點連續答錯 3 次，系統已自動暫停難度升級。', '需教師親自介入輔導觀念。', true);
+                return;
             }
 
-            // 【滿足要求 2：降級與專屬鷹架輔助】
-            let hintHtml = `<span class="wrong">❌ 答錯了。</span>`;
+            // 實作痛點 2：鷹架提示
             if (currentType === 2) {
-                hintHtml += `<div class="hint">💡 <b>提示：</b>試從算式中『自製』整十或整百數，將 99 改寫成 <b>(100 - 1)</b> 來計算喔！</div>`;
+                triggerAlert('認知阻塞預警', '學生在特定題型 (99 × 某數) 出現計算錯誤。', '試從算式中『自製』整十或整百數，將 99 改寫成 (100-1) 來計算喔！');
             } else if (currentType === 1) {
-                hintHtml += `<div class="hint">💡 <b>提示：</b>試著利用分配性質，抽出共同的數字來相減。</div>`;
+                triggerAlert('認知阻塞預警', '學生在乘減混合運算發生錯誤。', '試著利用分配性質，抽出共同的數字來相減。');
             } else {
-                hintHtml += `<div class="hint">💡 <b>提示：</b>試著把相乘的數字合併相加。</div>`;
+                triggerAlert('認知阻塞預警', '學生在乘加混合運算發生錯誤。', '試著把相乘的數字合併相加，湊成整十或整百。');
             }
-            feedback.innerHTML = hintHtml;
+            
+            ui.input.value = '';
         }
     }
 
-    function updateTeacherDashboard() {
-        let alertsArea = document.getElementById('alerts-area');
-        if (teacherAlerts.length === 0) {
-            alertsArea.innerHTML = "<div style='color:green;'>✅ 目前無異常名單。</div>";
-        } else {
-            alertsArea.innerHTML = teacherAlerts.map(a => `<div class="alert-item">${a}</div>`).join('');
-        }
-    }
+    // 初始化第一章圖的起始狀態
+    generateQuestion();
 </script>
 </body>
 </html>
