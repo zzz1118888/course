@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 智適應速算系統 - 完整 POC 版</title>
+    <title>智適應速算系統</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { margin: 0; background-color: #1a1f35; color: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; padding: 40px 0; }
-        .top-bar { position: fixed; top: 0; left: 0; width: 100%; height: 6px; background-color: #f3704b; z-index: 100;}
+        body { margin: 0; background-color: #1a1f35; color: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; padding: 100px 0 40px 0; }
+        
+        .navbar { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background-color: #131726; border-bottom: 2px solid #f3704b; display: flex; align-items: center; padding: 0 30px; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .logo { font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; display: flex; align-items: center; }
         
         .container { width: 100%; max-width: 1000px; padding: 20px; display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s; }
         .container.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 標題與共用元件 */
         .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #364061; padding-bottom: 15px; margin-bottom: 10px; }
         .header h1 { margin: 0; font-size: 22px; letter-spacing: 1px; color: #f3704b; }
         .user-info { font-size: 14px; color: #8f95b2; display: flex; gap: 15px; align-items: center; }
@@ -25,27 +26,23 @@
         .btn-secondary { background-color: #364061; color: white; padding: 10px 20px; font-size: 14px; }
         .btn-secondary:hover { background-color: #4a5578; }
         
-        /* 登入畫面 */
         .login-box { max-width: 400px; margin: 0 auto; text-align: center; }
         .login-box input { width: 100%; padding: 15px; font-size: 18px; background: #1e2439; border: 1px solid #364061; color: white; border-radius: 8px; margin-bottom: 20px; text-align: center;}
         .login-box input:focus { outline: none; border-color: #f3704b; }
         .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
-        /* 學生主選單 */
         .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; }
         .menu-card { background-color: #1e2439; border: 2px solid #364061; border-radius: 12px; padding: 30px 20px; text-align: center; cursor: pointer; transition: 0.3s; }
         .menu-card:hover { border-color: #f3704b; transform: translateY(-5px); }
         .menu-card h2 { margin: 0 0 10px 0; font-size: 20px; }
         .menu-card p { margin: 0; color: #8f95b2; font-size: 13px; line-height: 1.5; }
 
-        /* 測驗畫面 */
         .quiz-header { display: flex; justify-content: space-between; color: #a4abbe; font-size: 15px; margin-bottom: 30px; }
         .equation-area { font-size: 40px; letter-spacing: 2px; text-align: center; margin: 40px 0; }
         input[type="number"] { background: transparent; border: none; border-bottom: 3px solid #f3704b; color: #f3704b; font-size: 40px; width: 120px; text-align: center; outline: none; padding: 0 5px; font-weight: bold; transition: color 0.3s; }
         input[type="number"]:disabled { border-bottom-color: #364061; }
         .alert-hint { margin-top: 20px; background-color: #fdfae6; color: #d35400; padding: 15px; border-radius: 8px; font-size: 15px; display: none; text-align: left; border-left: 5px solid #d35400; animation: fadeIn 0.5s;}
 
-        /* 排行榜 & 結果 */
         .result-box { text-align: center; padding: 40px; }
         .result-score { font-size: 60px; color: #f3704b; font-weight: bold; margin: 20px 0; }
         .leaderboard { margin-top: 30px; text-align: left; background: #1e2439; padding: 20px; border-radius: 8px; }
@@ -57,7 +54,6 @@
         .summary-table th { color: #8f95b2; font-weight: normal; background-color: #1e2439; }
         .summary-table td:first-child, .summary-table th:first-child { text-align: left; }
 
-        /* 教師儀表板 */
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
         .stat-box { background: #1e2439; padding: 20px; border-radius: 8px; }
@@ -74,7 +70,6 @@
         select.custom-select { padding: 8px 12px; border-radius: 6px; background: #1e2439; color: white; border: 1px solid #364061; outline: none; font-size: 14px; cursor: pointer; }
         select.custom-select:focus { border-color: #f3704b; }
 
-        /* 原生卷軸美化，用於原始明細區塊 */
         .scrollable-table-container { max-height: 350px; overflow-y: auto; margin-top: 10px; border: 1px solid #364061; border-radius: 8px; }
         .scrollable-table-container::-webkit-scrollbar { width: 8px; }
         .scrollable-table-container::-webkit-scrollbar-track { background: #1e2439; border-radius: 4px; }
@@ -83,7 +78,17 @@
     </style>
 </head>
 <body>
-    <div class="top-bar"></div>
+    
+    <div class="navbar">
+        <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#f3704b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 30px; height: 30px; margin-right: 12px;">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 12 12 17 22 12"></polyline>
+                <polyline points="2 17 12 22 22 17"></polyline>
+            </svg>
+            智適應速算系統
+        </div>
+    </div>
 
     <!-- 1. 登入畫面 -->
     <div class="container active" id="login-view">
@@ -92,8 +97,8 @@
             <p style="color: #8f95b2; margin-bottom: 30px;">請輸入姓名並選擇身分</p>
             <input type="text" id="username" placeholder="請輸入您的姓名" autocomplete="off">
             <div class="role-grid">
-                <button class="btn-secondary" onclick="login('student')">👨‍🎓 學生登入</button>
-                <button class="btn-secondary" onclick="login('teacher')">👨‍🏫 教師登入</button>
+                <button class="btn-secondary" onclick="login('student')">學生登入</button>
+                <button class="btn-secondary" onclick="login('teacher')">教師登入</button>
             </div>
         </div>
     </div>
@@ -109,15 +114,15 @@
         </div>
         <div class="menu-grid">
             <div class="menu-card" onclick="startMode('practice')">
-                <h2>📝 練習模式</h2>
+                <h2>練習模式</h2>
                 <p>每次 10 道題，思考超時給予提示，錯題自動收集。</p>
             </div>
             <div class="menu-card" onclick="startMode('challenge')">
-                <h2>🏆 挑戰模式</h2>
+                <h2>挑戰模式</h2>
                 <p>無限挑戰，答錯即淘汰！難度遞增，挑戰排行榜最高榮譽。</p>
             </div>
             <div class="menu-card" onclick="startMode('mistake')">
-                <h2>📚 錯題集 <span id="mistake-count" style="color:#f3704b;">(0)</span></h2>
+                <h2>錯題集 <span id="mistake-count" style="color:#f3704b;">(0)</span></h2>
                 <p>針對弱點特訓，隨機出題，需連續答對兩次才能消滅錯題。</p>
             </div>
         </div>
@@ -132,7 +137,7 @@
         <div class="card">
             <div class="quiz-header">
                 <span id="quiz-progress">進度: 0/10</span>
-                <span id="quiz-timer">⏱️ 0.0s</span>
+                <span id="quiz-timer">0.0s</span>
             </div>
             <div class="equation-area">
                 <span id="q-text">--</span> = <input type="number" id="ans-input" onkeypress="if(event.key==='Enter') submitAnswer()">
@@ -152,7 +157,7 @@
             <p id="result-desc" style="color: #8f95b2;">錯題已自動加入錯題集。</p>
             
             <div id="session-summary-section" style="margin-top: 30px; text-align: left; background: #1e2439; padding: 20px; border-radius: 8px;">
-                <h3 style="margin-top:0; color:#f3704b; font-size: 16px;">📊 本次練習分類表現</h3>
+                <h3 style="margin-top:0; color:#f3704b; font-size: 16px;">本次練習分類表現</h3>
                 <table class="summary-table">
                     <thead>
                         <tr>
@@ -168,7 +173,7 @@
             </div>
 
             <div class="leaderboard" id="leaderboard-section" style="display:none; margin-top: 20px;">
-                <h3 style="margin-top:0; color:#f3704b; font-size: 16px;">🏆 挑戰排行榜</h3>
+                <h3 style="margin-top:0; color:#f3704b; font-size: 16px;">挑戰排行榜</h3>
                 <div id="lb-list"></div>
             </div>
 
@@ -203,7 +208,7 @@
 
         <div class="dashboard-grid">
             <div class="card">
-                <h3 style="margin-top:0; color:#e74c3c;">🚨 需關注學生名單 (異常雷達)</h3>
+                <h3 style="margin-top:0; color:#e74c3c;">需關注學生名單 (異常雷達)</h3>
                 <table>
                     <thead>
                         <tr>
@@ -219,7 +224,7 @@
             </div>
 
             <div class="card">
-                <h3 style="margin-top:0;">📊 全班弱點題型分析</h3>
+                <h3 style="margin-top:0;">全班弱點題型分析</h3>
                 <table>
                     <thead>
                         <tr>
@@ -234,16 +239,14 @@
                 </table>
             </div>
 
-            <!-- 學生個人學情診斷 & 原始數據區塊 -->
             <div class="card" style="grid-column: 1 / -1;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="margin:0;">🔍 學生個人學情診斷與作答明細</h3>
+                    <h3 style="margin:0;">學生個人學情診斷與作答明細</h3>
                     <select id="student-selector" class="custom-select" onchange="renderStudentDetail()">
                         <option value="">-- 請選擇學生 --</option>
                     </select>
                 </div>
                 
-                <!-- 該生各題型聚合數據 -->
                 <table style="margin-bottom: 20px;">
                     <thead>
                         <tr>
@@ -261,8 +264,7 @@
 
                 <hr style="border: 0; border-top: 1px dashed #364061; margin: 25px 0;">
                 
-                <!-- 新增：該生每一題的原始數據列表 -->
-                <h4 style="margin: 0 0 10px 0; color: #a4abbe;">📝 該生作答完整明細 (Raw Data)</h4>
+                <h4 style="margin: 0 0 10px 0; color: #a4abbe;">該生作答完整明細 (Raw Data)</h4>
                 <div class="scrollable-table-container">
                     <table style="margin-top: 0;">
                         <thead style="position: sticky; top: 0; z-index: 1;">
@@ -286,7 +288,6 @@
     </div>
 
 <script>
-    // --- 系統資料庫 ---
     let usersData = {}; 
     let currentStudent = "";
     let currentMistakeBook = []; 
@@ -300,7 +301,6 @@
     let sessionLogs = []; 
     let askedQuestions = new Set(); 
 
-    // --- 測驗狀態 ---
     let currentMode = ""; 
     let qCount = 0;
     let score = 0;
@@ -367,8 +367,8 @@
         ui.hint.style.display = 'none';
         
         document.getElementById('quiz-title').innerText = 
-            mode === 'practice' ? '📝 練習模式 (10題)' : 
-            mode === 'challenge' ? '🏆 挑戰模式 (無上限)' : '📚 錯題集特訓';
+            mode === 'practice' ? '練習模式 (10題)' : 
+            mode === 'challenge' ? '挑戰模式 (無上限)' : '錯題集特訓';
             
         if (mode === 'mistake') {
             shuffleArray(currentMistakeBook);
@@ -408,14 +408,14 @@
         clearInterval(timerInterval);
         timerInterval = setInterval(() => {
             let elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-            ui.timer.innerText = `⏱️ ${elapsed}s`;
+            ui.timer.innerText = `${elapsed}s`;
 
             if (elapsed >= 20.0 && !hintShown && currentMode === 'practice') {
                 hintShown = true;
                 if (currentQ.type === '99乘法專項') {
-                    ui.hint.innerHTML = "💡 <b>超時提示：</b>試從算式中『自製』整十或整百數，將 99 改寫成 <b>(100-1)</b>";
+                    ui.hint.innerHTML = "<b>超時提示：</b>試從算式中『自製』整十或整百數，將 99 改寫成 <b>(100-1)</b>";
                 } else {
-                    ui.hint.innerHTML = "💡 <b>超時提示：</b>請觀察數字是否有共通點可以提出來。";
+                    ui.hint.innerHTML = "<b>超時提示：</b>請觀察數字是否有共通點可以提出來。";
                 }
                 ui.hint.style.display = 'block';
             }
@@ -482,7 +482,6 @@
         let userAns = parseInt(inputVal);
         let isCorrect = (userAns === currentQ.ans);
 
-        // 寫回所有需要的原始資料欄位
         sessionLogs.push({
             studentName: currentStudent,
             qNum: qCount,
@@ -590,8 +589,9 @@
             
             let html = '';
             leaderboard.slice(0, 5).forEach((item, index) => {
+                let rankStr = index === 0 ? '第1名' : index === 1 ? '第2名' : index === 2 ? '第3名' : '-';
                 html += `<div class="lb-item">
-                            <span>${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '▪️'} ${item.name}</span>
+                            <span>${rankStr} ${item.name}</span>
                             <span style="color:#f3704b; font-weight:bold;">${item.score} 題</span>
                          </div>`;
             });
@@ -677,7 +677,7 @@
                 </tr>`;
             }
         }
-        if(!studentHtml) studentHtml = `<tr><td colspan="4" class="empty-msg">🎉 表現良好，目前全班無異常學生需關注。</td></tr>`;
+        if(!studentHtml) studentHtml = `<tr><td colspan="4" class="empty-msg">表現良好，目前全班無異常學生需關注。</td></tr>`;
         document.getElementById('teacher-student-alerts').innerHTML = studentHtml;
 
         let qStatsArray = Object.entries(questionStats).map(([type, data]) => {
@@ -732,7 +732,6 @@
             return;
         }
 
-        // 渲染該生分類統計
         let typeStats = {};
         logs.forEach(log => {
             if(!typeStats[log.type]) typeStats[log.type] = { attempts: 0, correct: 0, totalTime: 0 };
@@ -761,7 +760,6 @@
         }
         tbodySummary.innerHTML = summaryHtml;
 
-        // 渲染該生每一筆原始數據 (Raw Data)，使用 reverse() 讓最新的一筆在最上方
         let rawHtml = '';
         [...logs].reverse().forEach(log => {
             rawHtml += `<tr>
@@ -769,7 +767,7 @@
                 <td style="color:#a4abbe;">${log.type}</td>
                 <td style="font-size:12px;color:#8f95b2;">${log.text}</td>
                 <td style="color:${log.isCorrect ? '#27ae60' : '#e74c3c'}; font-weight:bold;">${log.userAns}</td>
-                <td>${log.isCorrect ? '✅' : '❌'}</td>
+                <td>${log.isCorrect ? '正確' : '錯誤'}</td>
                 <td>${log.time} s</td>
             </tr>`;
         });
