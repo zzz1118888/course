@@ -51,6 +51,11 @@
         .leaderboard { margin-top: 30px; text-align: left; background: #1e2439; padding: 20px; border-radius: 8px; }
         .lb-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #364061; }
         .lb-item:last-child { border: none; }
+        
+        .summary-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .summary-table th, .summary-table td { padding: 12px; text-align: center; border-bottom: 1px solid #364061; font-size: 14px; }
+        .summary-table th { color: #8f95b2; font-weight: normal; background-color: #1e2439; }
+        .summary-table td:first-child, .summary-table th:first-child { text-align: left; }
 
         /* 教師儀表板 */
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -66,9 +71,15 @@
         .tag-warning { background: #d35400; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 5px;}
         .empty-msg { text-align: center; color: #8f95b2; padding: 30px; }
         
-        /* 選擇器樣式 */
         select.custom-select { padding: 8px 12px; border-radius: 6px; background: #1e2439; color: white; border: 1px solid #364061; outline: none; font-size: 14px; cursor: pointer; }
         select.custom-select:focus { border-color: #f3704b; }
+
+        /* 原生卷軸美化，用於原始明細區塊 */
+        .scrollable-table-container { max-height: 350px; overflow-y: auto; margin-top: 10px; border: 1px solid #364061; border-radius: 8px; }
+        .scrollable-table-container::-webkit-scrollbar { width: 8px; }
+        .scrollable-table-container::-webkit-scrollbar-track { background: #1e2439; border-radius: 4px; }
+        .scrollable-table-container::-webkit-scrollbar-thumb { background: #364061; border-radius: 4px; }
+        .scrollable-table-container::-webkit-scrollbar-thumb:hover { background: #a4abbe; }
     </style>
 </head>
 <body>
@@ -140,8 +151,24 @@
             <div class="result-score" id="result-score">8/10</div>
             <p id="result-desc" style="color: #8f95b2;">錯題已自動加入錯題集。</p>
             
-            <div class="leaderboard" id="leaderboard-section" style="display:none;">
-                <h3 style="margin-top:0; color:#f3704b;">🏆 挑戰排行榜</h3>
+            <div id="session-summary-section" style="margin-top: 30px; text-align: left; background: #1e2439; padding: 20px; border-radius: 8px;">
+                <h3 style="margin-top:0; color:#f3704b; font-size: 16px;">📊 本次練習分類表現</h3>
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>題型類別</th>
+                            <th>作答數</th>
+                            <th>正確率</th>
+                            <th>平均耗時</th>
+                        </tr>
+                    </thead>
+                    <tbody id="session-summary-list">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="leaderboard" id="leaderboard-section" style="display:none; margin-top: 20px;">
+                <h3 style="margin-top:0; color:#f3704b; font-size: 16px;">🏆 挑戰排行榜</h3>
                 <div id="lb-list"></div>
             </div>
 
@@ -175,7 +202,6 @@
         </div>
 
         <div class="dashboard-grid">
-            <!-- 區塊一：異常學生標記 -->
             <div class="card">
                 <h3 style="margin-top:0; color:#e74c3c;">🚨 需關注學生名單 (異常雷達)</h3>
                 <table>
@@ -183,17 +209,15 @@
                         <tr>
                             <th>學生姓名</th>
                             <th>累積錯題數</th>
-                            <th>平均作答耗時</th>
-                            <th>系統預警標記</th>
+                            <th>平均耗時</th>
+                            <th>預警標記</th>
                         </tr>
                     </thead>
                     <tbody id="teacher-student-alerts">
-                        <!-- 動態生成 -->
                     </tbody>
                 </table>
             </div>
 
-            <!-- 區塊二：弱點題型分析 -->
             <div class="card">
                 <h3 style="margin-top:0;">📊 全班弱點題型分析</h3>
                 <table>
@@ -202,25 +226,25 @@
                             <th>題型類別</th>
                             <th>總作答次數</th>
                             <th>錯誤率</th>
-                            <th>平均耗時</th>
                             <th>狀態</th>
                         </tr>
                     </thead>
                     <tbody id="teacher-question-stats">
-                        <!-- 動態生成 -->
                     </tbody>
                 </table>
             </div>
 
-            <!-- 區塊三：新增 - 學生個人學情診斷 (橫跨兩欄) -->
+            <!-- 學生個人學情診斷 & 原始數據區塊 -->
             <div class="card" style="grid-column: 1 / -1;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="margin:0;">🔍 學生個人學情診斷</h3>
+                    <h3 style="margin:0;">🔍 學生個人學情診斷與作答明細</h3>
                     <select id="student-selector" class="custom-select" onchange="renderStudentDetail()">
                         <option value="">-- 請選擇學生 --</option>
                     </select>
                 </div>
-                <table>
+                
+                <!-- 該生各題型聚合數據 -->
+                <table style="margin-bottom: 20px;">
                     <thead>
                         <tr>
                             <th>題型類別</th>
@@ -231,10 +255,32 @@
                         </tr>
                     </thead>
                     <tbody id="teacher-student-detail">
-                        <!-- 動態生成 -->
                         <tr><td colspan="5" class="empty-msg">請由右上方選擇學生以檢視各類題型分析。</td></tr>
                     </tbody>
                 </table>
+
+                <hr style="border: 0; border-top: 1px dashed #364061; margin: 25px 0;">
+                
+                <!-- 新增：該生每一題的原始數據列表 -->
+                <h4 style="margin: 0 0 10px 0; color: #a4abbe;">📝 該生作答完整明細 (Raw Data)</h4>
+                <div class="scrollable-table-container">
+                    <table style="margin-top: 0;">
+                        <thead style="position: sticky; top: 0; z-index: 1;">
+                            <tr>
+                                <th>題號</th>
+                                <th>題型</th>
+                                <th>題目內容</th>
+                                <th>學生答案</th>
+                                <th>結果</th>
+                                <th>作答時間</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacher-student-raw-log">
+                            <tr><td colspan="6" class="empty-msg">請由上方選擇學生以檢視原始數據。</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
         </div>
     </div>
@@ -263,6 +309,7 @@
     let timerInterval;
     let isSubmitting = false; 
     let hintShown = false; 
+    let sessionStartIndex = 0; 
 
     const ui = {
         ansInput: document.getElementById('ans-input'),
@@ -315,6 +362,7 @@
         currentMode = mode;
         qCount = 0;
         score = 0;
+        sessionStartIndex = sessionLogs.length; 
         askedQuestions.clear(); 
         ui.hint.style.display = 'none';
         
@@ -434,9 +482,13 @@
         let userAns = parseInt(inputVal);
         let isCorrect = (userAns === currentQ.ans);
 
+        // 寫回所有需要的原始資料欄位
         sessionLogs.push({
             studentName: currentStudent,
+            qNum: qCount,
+            text: currentQ.text,
             type: currentQ.type,
+            userAns: userAns,
             isCorrect: isCorrect,
             time: timeTaken
         });
@@ -492,10 +544,42 @@
     function showResult() {
         switchView('result-view');
         const lSection = document.getElementById('leaderboard-section');
+        const summarySection = document.getElementById('session-summary-section');
         
+        let currentSessionLogs = sessionLogs.slice(sessionStartIndex);
+        if (currentSessionLogs.length > 0) {
+            let summaryStats = {};
+            currentSessionLogs.forEach(log => {
+                if (!summaryStats[log.type]) {
+                    summaryStats[log.type] = { attempts: 0, correct: 0, time: 0 };
+                }
+                summaryStats[log.type].attempts++;
+                if (log.isCorrect) summaryStats[log.type].correct++;
+                summaryStats[log.type].time += log.time;
+            });
+
+            let summaryHtml = '';
+            for (let [type, data] of Object.entries(summaryStats)) {
+                let acc = Math.round((data.correct / data.attempts) * 100);
+                let avgTime = (data.time / data.attempts).toFixed(1);
+                let color = acc < 60 ? '#e74c3c' : (acc < 80 ? '#f39c12' : '#27ae60');
+                
+                summaryHtml += `<tr>
+                    <td>${type}</td>
+                    <td>${data.attempts}</td>
+                    <td style="color: ${color}; font-weight: bold;">${acc}%</td>
+                    <td>${avgTime}s</td>
+                </tr>`;
+            }
+            document.getElementById('session-summary-list').innerHTML = summaryHtml;
+            summarySection.style.display = 'block';
+        } else {
+            summarySection.style.display = 'none';
+        }
+
         if (currentMode === 'practice') {
             document.getElementById('result-title').innerText = "練習結算";
-            document.getElementById('result-score').innerText = `${score} / 10`;
+            document.getElementById('result-score').innerText = `${score} / ${qCount}`;
             lSection.style.display = 'none';
         } else if (currentMode === 'challenge') {
             document.getElementById('result-title').innerText = "挑戰結束";
@@ -516,13 +600,11 @@
         }
     }
 
-    // --- 教師儀表板：數據聚合與預警邏輯 ---
     function updateTeacherDashboard() {
         let totalAttempts = sessionLogs.length;
         let totalCorrect = 0;
         let totalMistakesAllUsers = 0;
         
-        // 更新學生下拉選單
         let selector = document.getElementById('student-selector');
         let currentSelection = selector.value;
         selector.innerHTML = '<option value="">-- 請選擇學生 --</option>';
@@ -539,11 +621,10 @@
         if (totalAttempts === 0) {
             document.getElementById('t-avg-accuracy').innerText = '-- %';
             document.getElementById('teacher-student-alerts').innerHTML = `<tr><td colspan="4" class="empty-msg">目前尚無作答數據，等待學生開始練習。</td></tr>`;
-            document.getElementById('teacher-question-stats').innerHTML = `<tr><td colspan="5" class="empty-msg">缺乏足夠數據進行題型分析。</td></tr>`;
+            document.getElementById('teacher-question-stats').innerHTML = `<tr><td colspan="4" class="empty-msg">缺乏足夠數據進行題型分析。</td></tr>`;
             return;
         }
 
-        // 1. 資料聚合 (Aggregation)
         let studentStats = {};
         let questionStats = {};
 
@@ -579,7 +660,6 @@
 
         document.getElementById('t-avg-accuracy').innerText = `${Math.round((totalCorrect / totalAttempts) * 100)} %`;
 
-        // 2. 渲染「需關注學生名單」
         let studentHtml = '';
         for (let [name, data] of Object.entries(studentStats)) {
             let alerts = [];
@@ -600,7 +680,6 @@
         if(!studentHtml) studentHtml = `<tr><td colspan="4" class="empty-msg">🎉 表現良好，目前全班無異常學生需關注。</td></tr>`;
         document.getElementById('teacher-student-alerts').innerHTML = studentHtml;
 
-        // 3. 渲染「弱點題型分析」
         let qStatsArray = Object.entries(questionStats).map(([type, data]) => {
             return {
                 type: type,
@@ -624,35 +703,36 @@
                 <td style="color:#a4abbe;">${q.type}</td>
                 <td>${q.attempts} 次</td>
                 <td style="color:${errorRatePercent >= 40 ? '#e74c3c' : '#ffffff'}; font-weight:bold;">${errorRatePercent}%</td>
-                <td>${q.avgTime.toFixed(1)} s</td>
                 <td>${statusTag}</td>
             </tr>`;
         });
         document.getElementById('teacher-question-stats').innerHTML = questionHtml;
 
-        // 4. 自動預設選中第一位學生，並渲染個人分析
         if (!currentSelection && Object.keys(usersData).length > 0) {
             selector.value = Object.keys(usersData)[0];
         }
         renderStudentDetail();
     }
 
-    // 渲染特定學生的個人題型診斷
     function renderStudentDetail() {
         let studentName = document.getElementById('student-selector').value;
-        let tbody = document.getElementById('teacher-student-detail');
+        let tbodySummary = document.getElementById('teacher-student-detail');
+        let tbodyRaw = document.getElementById('teacher-student-raw-log');
         
         if (!studentName) {
-            tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">請先由右上方選擇學生以檢視個人分析。</td></tr>';
+            tbodySummary.innerHTML = '<tr><td colspan="5" class="empty-msg">請先由右上方選擇學生以檢視個人分析。</td></tr>';
+            tbodyRaw.innerHTML = '<tr><td colspan="6" class="empty-msg">請由上方選擇學生以檢視原始數據。</td></tr>';
             return;
         }
 
         let logs = sessionLogs.filter(log => log.studentName === studentName);
         if (logs.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="empty-msg">${studentName} 尚無作答紀錄。</td></tr>`;
+            tbodySummary.innerHTML = `<tr><td colspan="5" class="empty-msg">${studentName} 尚無作答紀錄。</td></tr>`;
+            tbodyRaw.innerHTML = `<tr><td colspan="6" class="empty-msg">${studentName} 尚無作答紀錄。</td></tr>`;
             return;
         }
 
+        // 渲染該生分類統計
         let typeStats = {};
         logs.forEach(log => {
             if(!typeStats[log.type]) typeStats[log.type] = { attempts: 0, correct: 0, totalTime: 0 };
@@ -661,7 +741,7 @@
             typeStats[log.type].totalTime += log.time;
         });
 
-        let html = '';
+        let summaryHtml = '';
         for (let [type, stats] of Object.entries(typeStats)) {
             let accuracy = Math.round((stats.correct / stats.attempts) * 100);
             let avgTime = (stats.totalTime / stats.attempts).toFixed(1);
@@ -671,7 +751,7 @@
             else if (accuracy < 80 || avgTime > 15) statusTag = '<span class="tag-warning">需多練習</span>';
             else statusTag = '<span style="color:#27ae60; font-weight:bold;">精通</span>';
 
-            html += `<tr>
+            summaryHtml += `<tr>
                 <td style="color:#a4abbe;">${type}</td>
                 <td>${stats.attempts} 次</td>
                 <td style="color:${accuracy < 60 ? '#e74c3c' : '#ffffff'}; font-weight:bold;">${accuracy}%</td>
@@ -679,7 +759,21 @@
                 <td>${statusTag}</td>
             </tr>`;
         }
-        tbody.innerHTML = html;
+        tbodySummary.innerHTML = summaryHtml;
+
+        // 渲染該生每一筆原始數據 (Raw Data)，使用 reverse() 讓最新的一筆在最上方
+        let rawHtml = '';
+        [...logs].reverse().forEach(log => {
+            rawHtml += `<tr>
+                <td>Q${log.qNum}</td>
+                <td style="color:#a4abbe;">${log.type}</td>
+                <td style="font-size:12px;color:#8f95b2;">${log.text}</td>
+                <td style="color:${log.isCorrect ? '#27ae60' : '#e74c3c'}; font-weight:bold;">${log.userAns}</td>
+                <td>${log.isCorrect ? '✅' : '❌'}</td>
+                <td>${log.time} s</td>
+            </tr>`;
+        });
+        tbodyRaw.innerHTML = rawHtml;
     }
 </script>
 </body>
