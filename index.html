@@ -6,7 +6,7 @@
     <title>AI 智適應速算系統 - 完整 POC 版</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { margin: 0; background-color: #1a1f35; color: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        body { margin: 0; background-color: #1a1f35; color: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; padding: 40px 0; }
         .top-bar { position: fixed; top: 0; left: 0; width: 100%; height: 6px; background-color: #f3704b; z-index: 100;}
         
         .container { width: 100%; max-width: 1000px; padding: 20px; display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s; }
@@ -53,7 +53,7 @@
         .lb-item:last-child { border: none; }
 
         /* 教師儀表板 */
-        .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
         .stat-box { background: #1e2439; padding: 20px; border-radius: 8px; }
         .stat-box h3 { margin: 0 0 10px 0; font-size: 14px; color: #8f95b2; }
@@ -65,6 +65,10 @@
         .tag-danger { background: #c0392b; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 5px;}
         .tag-warning { background: #d35400; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; margin-right: 5px; margin-bottom: 5px;}
         .empty-msg { text-align: center; color: #8f95b2; padding: 30px; }
+        
+        /* 選擇器樣式 */
+        select.custom-select { padding: 8px 12px; border-radius: 6px; background: #1e2439; color: white; border: 1px solid #364061; outline: none; font-size: 14px; cursor: pointer; }
+        select.custom-select:focus { border-color: #f3704b; }
     </style>
 </head>
 <body>
@@ -207,6 +211,31 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- 區塊三：新增 - 學生個人學情診斷 (橫跨兩欄) -->
+            <div class="card" style="grid-column: 1 / -1;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin:0;">🔍 學生個人學情診斷</h3>
+                    <select id="student-selector" class="custom-select" onchange="renderStudentDetail()">
+                        <option value="">-- 請選擇學生 --</option>
+                    </select>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>題型類別</th>
+                            <th>該生作答總數</th>
+                            <th>個人正確率</th>
+                            <th>個人平均耗時</th>
+                            <th>系統診斷</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teacher-student-detail">
+                        <!-- 動態生成 -->
+                        <tr><td colspan="5" class="empty-msg">請由右上方選擇學生以檢視各類題型分析。</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -222,7 +251,6 @@
         { name: "張同學", score: 8 }
     ];
     
-    // sessionLogs 保留作答紀錄，用於教師端大數據運算
     let sessionLogs = []; 
     let askedQuestions = new Set(); 
 
@@ -336,7 +364,7 @@
 
             if (elapsed >= 20.0 && !hintShown && currentMode === 'practice') {
                 hintShown = true;
-                if (currentQ.type === '99乘法') {
+                if (currentQ.type === '99乘法專項') {
                     ui.hint.innerHTML = "💡 <b>超時提示：</b>試從算式中『自製』整十或整百數，將 99 改寫成 <b>(100-1)</b>";
                 } else {
                     ui.hint.innerHTML = "💡 <b>超時提示：</b>請觀察數字是否有共通點可以提出來。";
@@ -406,7 +434,6 @@
         let userAns = parseInt(inputVal);
         let isCorrect = (userAns === currentQ.ans);
 
-        // 寫入教師端資料庫 (保留大數據運算基礎)
         sessionLogs.push({
             studentName: currentStudent,
             type: currentQ.type,
@@ -494,7 +521,17 @@
         let totalAttempts = sessionLogs.length;
         let totalCorrect = 0;
         let totalMistakesAllUsers = 0;
-        for (let user in usersData) { totalMistakesAllUsers += usersData[user].mistakeBook.length; }
+        
+        // 更新學生下拉選單
+        let selector = document.getElementById('student-selector');
+        let currentSelection = selector.value;
+        selector.innerHTML = '<option value="">-- 請選擇學生 --</option>';
+        
+        for (let user in usersData) { 
+            totalMistakesAllUsers += usersData[user].mistakeBook.length; 
+            let selected = (user === currentSelection) ? 'selected' : '';
+            selector.innerHTML += `<option value="${user}" ${selected}>${user}</option>`;
+        }
         
         document.getElementById('t-total-attempts').innerText = `${totalAttempts} 題`;
         document.getElementById('t-mistake-total').innerText = `${totalMistakesAllUsers} 題`;
@@ -513,7 +550,6 @@
         sessionLogs.forEach(log => {
             if(log.isCorrect) totalCorrect++;
 
-            // 統計學生維度
             if(!studentStats[log.studentName]) {
                 studentStats[log.studentName] = { totalAttempts: 0, mistakes: 0, totalTime: 0, currentStreakMistakes: 0, maxConsecutiveMistakes: 0, timeIssues: 0 };
             }
@@ -527,13 +563,12 @@
                     studentStats[log.studentName].maxConsecutiveMistakes = studentStats[log.studentName].currentStreakMistakes;
                 }
             } else {
-                studentStats[log.studentName].currentStreakMistakes = 0; // 答對即中斷連錯
+                studentStats[log.studentName].currentStreakMistakes = 0;
             }
-            if(log.time >= 20.0) { // 配合超時提示秒數
+            if(log.time >= 20.0) { 
                 studentStats[log.studentName].timeIssues++;
             }
 
-            // 統計題型維度
             if(!questionStats[log.type]) {
                 questionStats[log.type] = { attempts: 0, mistakes: 0, totalTime: 0 };
             }
@@ -544,16 +579,14 @@
 
         document.getElementById('t-avg-accuracy').innerText = `${Math.round((totalCorrect / totalAttempts) * 100)} %`;
 
-        // 2. 渲染「需關注學生名單」 (只顯示有問題的學生)
+        // 2. 渲染「需關注學生名單」
         let studentHtml = '';
         for (let [name, data] of Object.entries(studentStats)) {
             let alerts = [];
-            // 觸發條件：連錯3次 或 錯題率高(>40%且作答>3題) 或 頻繁超時
             if (data.maxConsecutiveMistakes >= 3) alerts.push(`<span class="tag-danger">連錯 ${data.maxConsecutiveMistakes} 題</span>`);
             if (data.totalAttempts > 3 && (data.mistakes / data.totalAttempts) > 0.4) alerts.push(`<span class="tag-danger">高錯誤率</span>`);
             if (data.timeIssues >= 2) alerts.push(`<span class="tag-warning">頻繁超時 (${data.timeIssues}次)</span>`);
 
-            // 如果有任何警報，或者單純錯題很多，就列出來
             if (alerts.length > 0 || data.mistakes >= 3) {
                 let avgTime = (data.totalTime / data.totalAttempts).toFixed(1);
                 studentHtml += `<tr>
@@ -577,7 +610,6 @@
             };
         });
         
-        // 依照錯誤率高低排序
         qStatsArray.sort((a, b) => b.errorRate - a.errorRate);
 
         let questionHtml = '';
@@ -597,6 +629,57 @@
             </tr>`;
         });
         document.getElementById('teacher-question-stats').innerHTML = questionHtml;
+
+        // 4. 自動預設選中第一位學生，並渲染個人分析
+        if (!currentSelection && Object.keys(usersData).length > 0) {
+            selector.value = Object.keys(usersData)[0];
+        }
+        renderStudentDetail();
+    }
+
+    // 渲染特定學生的個人題型診斷
+    function renderStudentDetail() {
+        let studentName = document.getElementById('student-selector').value;
+        let tbody = document.getElementById('teacher-student-detail');
+        
+        if (!studentName) {
+            tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">請先由右上方選擇學生以檢視個人分析。</td></tr>';
+            return;
+        }
+
+        let logs = sessionLogs.filter(log => log.studentName === studentName);
+        if (logs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="empty-msg">${studentName} 尚無作答紀錄。</td></tr>`;
+            return;
+        }
+
+        let typeStats = {};
+        logs.forEach(log => {
+            if(!typeStats[log.type]) typeStats[log.type] = { attempts: 0, correct: 0, totalTime: 0 };
+            typeStats[log.type].attempts++;
+            if(log.isCorrect) typeStats[log.type].correct++;
+            typeStats[log.type].totalTime += log.time;
+        });
+
+        let html = '';
+        for (let [type, stats] of Object.entries(typeStats)) {
+            let accuracy = Math.round((stats.correct / stats.attempts) * 100);
+            let avgTime = (stats.totalTime / stats.attempts).toFixed(1);
+            
+            let statusTag = '';
+            if (accuracy < 60) statusTag = '<span class="tag-danger">需輔導</span>';
+            else if (accuracy < 80 || avgTime > 15) statusTag = '<span class="tag-warning">需多練習</span>';
+            else statusTag = '<span style="color:#27ae60; font-weight:bold;">精通</span>';
+
+            html += `<tr>
+                <td style="color:#a4abbe;">${type}</td>
+                <td>${stats.attempts} 次</td>
+                <td style="color:${accuracy < 60 ? '#e74c3c' : '#ffffff'}; font-weight:bold;">${accuracy}%</td>
+                <td>${avgTime} s</td>
+                <td>${statusTag}</td>
+            </tr>`;
+        }
+        tbody.innerHTML = html;
     }
 </script>
 </body>
