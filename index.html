@@ -3,48 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智適應速算系統</title>
+    <title>RightPick 智適應速算系統 - POC</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { margin: 0; background-color: #1a1f35; color: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; padding: 100px 0 40px 0; }
         
-        .navbar { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background-color: #131726; border-bottom: 2px solid #f3704b; display: flex; align-items: center; padding: 0 30px; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        /* 佈局設定：深色主題背景 */
+        body { 
+            margin: 0; 
+            background-color: #1a1f35; 
+            color: #ffffff; 
+            display: flex; 
+            flex-direction: column;
+            min-height: 100vh; 
+            overflow-x: hidden; 
+        }
+        
+        /* 頂部導航列：深色黑底、字白、左右對齊 */
+        .navbar { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 70px; 
+            background-color: #131726; 
+            border-bottom: 1px solid #364061; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 0 40px; 
+            z-index: 1000; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
+        }
+        
+        /* 左上角之前的 Logo */
         .logo { font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; display: flex; align-items: center; }
         
-        .container { width: 100%; max-width: 1000px; padding: 20px; display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s; }
+        /* 右上方的新 Logo */
+        .rp-logo { display: flex; align-items: center; font-size: 26px; font-weight: 800; letter-spacing: 0.5px; }
+        .rp-logo svg { width: 34px; height: 34px; margin-right: 10px; }
+        .rp-red { color: #F17D7E; }
+        .rp-blue { color: #4FA8D6; }
+        
+        /* 中間主要內容區塊 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 100px 20px 60px 20px;
+            width: 100%;
+        }
+
+        .container { width: 100%; max-width: 1000px; display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s; }
         .container.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #364061; padding-bottom: 15px; margin-bottom: 10px; }
-        .header h1 { margin: 0; font-size: 22px; letter-spacing: 1px; color: #f3704b; }
+        .header h1 { margin: 0; font-size: 22px; letter-spacing: 1px; color: #F17D7E; }
         .user-info { font-size: 14px; color: #8f95b2; display: flex; gap: 15px; align-items: center; }
         
         .card { background-color: #272f4b; border-radius: 12px; border: 1px solid #364061; padding: 25px; }
         button { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: 0.2s; }
-        .btn-primary { background-color: #f3704b; color: white; padding: 12px 24px; font-size: 16px; }
-        .btn-primary:hover { background-color: #d35400; }
+        .btn-primary { background-color: #F17D7E; color: white; padding: 12px 24px; font-size: 16px; }
+        .btn-primary:hover { background-color: #d96667; }
         .btn-secondary { background-color: #364061; color: white; padding: 10px 20px; font-size: 14px; }
         .btn-secondary:hover { background-color: #4a5578; }
         
         .login-box { max-width: 400px; margin: 0 auto; text-align: center; }
         .login-box input { width: 100%; padding: 15px; font-size: 18px; background: #1e2439; border: 1px solid #364061; color: white; border-radius: 8px; margin-bottom: 20px; text-align: center;}
-        .login-box input:focus { outline: none; border-color: #f3704b; }
+        .login-box input:focus { outline: none; border-color: #F17D7E; }
         .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
         .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; }
         .menu-card { background-color: #1e2439; border: 2px solid #364061; border-radius: 12px; padding: 30px 20px; text-align: center; cursor: pointer; transition: 0.3s; }
-        .menu-card:hover { border-color: #f3704b; transform: translateY(-5px); }
-        .menu-card h2 { margin: 0 0 10px 0; font-size: 20px; }
+        .menu-card:hover { border-color: #F17D7E; transform: translateY(-5px); }
+        .menu-card h2 { margin: 0 0 10px 0; font-size: 20px; color: #ffffff; }
         .menu-card p { margin: 0; color: #8f95b2; font-size: 13px; line-height: 1.5; }
 
         .quiz-header { display: flex; justify-content: space-between; color: #a4abbe; font-size: 15px; margin-bottom: 30px; }
         .equation-area { font-size: 40px; letter-spacing: 2px; text-align: center; margin: 40px 0; }
-        input[type="number"] { background: transparent; border: none; border-bottom: 3px solid #f3704b; color: #f3704b; font-size: 40px; width: 120px; text-align: center; outline: none; padding: 0 5px; font-weight: bold; transition: color 0.3s; }
+        input[type="number"] { background: transparent; border: none; border-bottom: 3px solid #F17D7E; color: #F17D7E; font-size: 40px; width: 120px; text-align: center; outline: none; padding: 0 5px; font-weight: bold; transition: color 0.3s; }
         input[type="number"]:disabled { border-bottom-color: #364061; }
-        .alert-hint { margin-top: 20px; background-color: #fdfae6; color: #d35400; padding: 15px; border-radius: 8px; font-size: 15px; display: none; text-align: left; border-left: 5px solid #d35400; animation: fadeIn 0.5s;}
+        .alert-hint { margin-top: 20px; background-color: #272f4b; color: #F17D7E; padding: 15px; border-radius: 8px; font-size: 15px; display: none; text-align: left; border-left: 5px solid #F17D7E; animation: fadeIn 0.5s;}
 
         .result-box { text-align: center; padding: 40px; }
-        .result-score { font-size: 60px; color: #f3704b; font-weight: bold; margin: 20px 0; }
+        .result-score { font-size: 60px; color: #F17D7E; font-weight: bold; margin: 20px 0; }
         .leaderboard { margin-top: 30px; text-align: left; background: #1e2439; padding: 20px; border-radius: 8px; }
         .lb-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #364061; }
         .lb-item:last-child { border: none; }
@@ -58,7 +101,7 @@
         .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
         .stat-box { background: #1e2439; padding: 20px; border-radius: 8px; }
         .stat-box h3 { margin: 0 0 10px 0; font-size: 14px; color: #8f95b2; }
-        .stat-box .val { font-size: 28px; font-weight: bold; color: #f3704b; }
+        .stat-box .val { font-size: 28px; font-weight: bold; color: #F17D7E; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 15px 12px; text-align: left; border-bottom: 1px solid #364061; }
@@ -68,17 +111,29 @@
         .empty-msg { text-align: center; color: #8f95b2; padding: 30px; }
         
         select.custom-select { padding: 8px 12px; border-radius: 6px; background: #1e2439; color: white; border: 1px solid #364061; outline: none; font-size: 14px; cursor: pointer; }
-        select.custom-select:focus { border-color: #f3704b; }
+        select.custom-select:focus { border-color: #F17D7E; }
 
         .scrollable-table-container { max-height: 350px; overflow-y: auto; margin-top: 10px; border: 1px solid #364061; border-radius: 8px; }
         .scrollable-table-container::-webkit-scrollbar { width: 8px; }
         .scrollable-table-container::-webkit-scrollbar-track { background: #1e2439; border-radius: 4px; }
         .scrollable-table-container::-webkit-scrollbar-thumb { background: #364061; border-radius: 4px; }
-        .scrollable-table-container::-webkit-scrollbar-thumb:hover { background: #a4abbe; }
+        
+        /* 修改後的 Footer：刪除中間列、大幅縮小上下 padding 使其變窄 */
+        .custom-footer { width: 100%; background-color: #131726; color: #a4abbe; font-family: sans-serif; border-top: 1px solid #364061; padding: 25px 0 15px 0; }
+        .footer-content { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; padding: 0 20px; align-items: flex-start; }
+        .footer-col { flex: 1; }
+        .footer-col h4 { color: #ffffff; font-size: 15px; margin-top: 5px; margin-bottom: 12px; }
+        .footer-col ul { list-style: none; padding: 0; margin: 0; }
+        .footer-col ul li { font-size: 12px; margin-bottom: 8px; color: #a4abbe; }
+        .footer-col .rp-logo { font-size: 20px; margin-bottom: 5px; }
+        .footer-col .rp-logo svg { width: 24px; height: 24px; }
+        .contact-info li { display: flex; align-items: flex-start; gap: 8px; }
+        .footer-bottom { max-width: 1100px; margin: 15px auto 0 auto; padding: 15px 20px 0 20px; border-top: 1px solid #364061; display: flex; justify-content: space-between; font-size: 11px; color: #8f95b2; }
     </style>
 </head>
 <body>
     
+    <!-- 導航列 -->
     <div class="navbar">
         <div class="logo">
             <svg viewBox="0 0 24 24" fill="none" stroke="#f3704b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 30px; height: 30px; margin-right: 12px;">
@@ -88,202 +143,242 @@
             </svg>
             智適應速算系統
         </div>
-    </div>
-
-    <!-- 1. 登入畫面 -->
-    <div class="container active" id="login-view">
-        <div class="card login-box">
-            <h1 style="color: #f3704b; margin-bottom: 10px;">系統登入</h1>
-            <p style="color: #8f95b2; margin-bottom: 30px;">請輸入姓名並選擇身分</p>
-            <input type="text" id="username" placeholder="請輸入您的姓名" autocomplete="off">
-            <div class="role-grid">
-                <button class="btn-secondary" onclick="login('student')">學生登入</button>
-                <button class="btn-secondary" onclick="login('teacher')">教師登入</button>
-            </div>
+        <div class="rp-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#F17D7E"/>
+                <circle cx="12" cy="12" r="2" fill="#4FA8D6" stroke="none"/>
+            </svg>
+            <span class="rp-red">Right</span><span class="rp-blue">Pick</span>
         </div>
     </div>
 
-    <!-- 2. 學生主選單 -->
-    <div class="container" id="student-menu">
-        <div class="header">
-            <h1>STUDENT PORTAL</h1>
-            <div class="user-info">
-                <span id="display-student-name"></span>
-                <button class="btn-secondary" onclick="switchView('login-view')">登出</button>
-            </div>
-        </div>
-        <div class="menu-grid">
-            <div class="menu-card" onclick="startMode('practice')">
-                <h2>練習模式</h2>
-                <p>每次 10 道題，思考超時給予提示，錯題自動收集。</p>
-            </div>
-            <div class="menu-card" onclick="startMode('challenge')">
-                <h2>挑戰模式</h2>
-                <p>無限挑戰，答錯即淘汰！難度遞增，挑戰排行榜最高榮譽。</p>
-            </div>
-            <div class="menu-card" onclick="startMode('mistake')">
-                <h2>錯題集 <span id="mistake-count" style="color:#f3704b;">(0)</span></h2>
-                <p>針對弱點特訓，隨機出題，需連續答對兩次才能消滅錯題。</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. 測驗共用畫面 -->
-    <div class="container" id="quiz-view">
-        <div class="header">
-            <h1 id="quiz-title">模式載入中...</h1>
-            <button class="btn-secondary" onclick="endQuizEarly()">放棄並返回</button>
-        </div>
-        <div class="card">
-            <div class="quiz-header">
-                <span id="quiz-progress">進度: 0/10</span>
-                <span id="quiz-timer">0.0s</span>
-            </div>
-            <div class="equation-area">
-                <span id="q-text">--</span> = <input type="number" id="ans-input" onkeypress="if(event.key==='Enter') submitAnswer()">
-            </div>
-            <div style="text-align: center;">
-                <button class="btn-primary" onclick="submitAnswer()" id="submit-btn">提交答案</button>
-            </div>
-            <div class="alert-hint" id="alert-hint"></div>
-        </div>
-    </div>
-
-    <!-- 4. 結果與排行榜畫面 -->
-    <div class="container" id="result-view">
-        <div class="card result-box">
-            <h2 id="result-title">結算報告</h2>
-            <div class="result-score" id="result-score">8/10</div>
-            <p id="result-desc" style="color: #8f95b2;">錯題已自動加入錯題集。</p>
-            
-            <div id="session-summary-section" style="margin-top: 30px; text-align: left; background: #1e2439; padding: 20px; border-radius: 8px;">
-                <h3 style="margin-top:0; color:#f3704b; font-size: 16px;">本次練習分類表現</h3>
-                <table class="summary-table">
-                    <thead>
-                        <tr>
-                            <th>題型類別</th>
-                            <th>作答數</th>
-                            <th>正確率</th>
-                            <th>平均耗時</th>
-                        </tr>
-                    </thead>
-                    <tbody id="session-summary-list">
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="leaderboard" id="leaderboard-section" style="display:none; margin-top: 20px;">
-                <h3 style="margin-top:0; color:#f3704b; font-size: 16px;">挑戰排行榜</h3>
-                <div id="lb-list"></div>
-            </div>
-
-            <button class="btn-primary" style="margin-top: 30px;" onclick="switchView('student-menu')">返回主選單</button>
-        </div>
-    </div>
-
-    <!-- 5. 教師數據儀表板 -->
-    <div class="container" id="teacher-dashboard">
-        <div class="header">
-            <h1>CLASSROOM LIVE DASHBOARD</h1>
-            <div class="user-info">
-                <span>教師: <span id="display-teacher-name"></span></span>
-                <button class="btn-secondary" onclick="switchView('login-view')">登出</button>
-            </div>
-        </div>
-        
-        <div class="stats-row">
-            <div class="stat-box">
-                <h3>全班累積作答量</h3>
-                <div class="val" id="t-total-attempts">0 題</div>
-            </div>
-            <div class="stat-box">
-                <h3>全班平均正確率</h3>
-                <div class="val" id="t-avg-accuracy">-- %</div>
-            </div>
-            <div class="stat-box">
-                <h3>錯題本待清總量</h3>
-                <div class="val" id="t-mistake-total">0 題</div>
-            </div>
-        </div>
-
-        <div class="dashboard-grid">
-            <div class="card">
-                <h3 style="margin-top:0; color:#e74c3c;">需關注學生名單 (異常雷達)</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>學生姓名</th>
-                            <th>累積錯題數</th>
-                            <th>平均耗時</th>
-                            <th>預警標記</th>
-                        </tr>
-                    </thead>
-                    <tbody id="teacher-student-alerts">
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="card">
-                <h3 style="margin-top:0;">全班弱點題型分析</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>題型類別</th>
-                            <th>總作答次數</th>
-                            <th>錯誤率</th>
-                            <th>狀態</th>
-                        </tr>
-                    </thead>
-                    <tbody id="teacher-question-stats">
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="card" style="grid-column: 1 / -1;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="margin:0;">學生個人學情診斷與作答明細</h3>
-                    <select id="student-selector" class="custom-select" onchange="renderStudentDetail()">
-                        <option value="">-- 請選擇學生 --</option>
-                    </select>
+    <!-- 主內容區塊包裝 -->
+    <div class="main-content">
+        <!-- 1. 登入畫面 -->
+        <div class="container active" id="login-view">
+            <div class="card login-box">
+                <h1 style="color: #F17D7E; margin-bottom: 10px;">系統登入</h1>
+                <p style="color: #8f95b2; margin-bottom: 30px;">請輸入姓名並選擇身分</p>
+                <input type="text" id="username" placeholder="請輸入您的姓名" autocomplete="off">
+                <div class="role-grid">
+                    <button class="btn-secondary" onclick="login('student')">學生登入</button>
+                    <button class="btn-secondary" onclick="login('teacher')">教師登入</button>
                 </div>
-                
-                <table style="margin-bottom: 20px;">
-                    <thead>
-                        <tr>
-                            <th>題型類別</th>
-                            <th>該生作答總數</th>
-                            <th>個人正確率</th>
-                            <th>個人平均耗時</th>
-                            <th>系統診斷</th>
-                        </tr>
-                    </thead>
-                    <tbody id="teacher-student-detail">
-                        <tr><td colspan="5" class="empty-msg">請由右上方選擇學生以檢視各類題型分析。</td></tr>
-                    </tbody>
-                </table>
+            </div>
+        </div>
 
-                <hr style="border: 0; border-top: 1px dashed #364061; margin: 25px 0;">
+        <!-- 2. 學生主選單 -->
+        <div class="container" id="student-menu">
+            <div class="header">
+                <h1>STUDENT PORTAL</h1>
+                <div class="user-info">
+                    <span id="display-student-name"></span>
+                    <button class="btn-secondary" onclick="switchView('login-view')">登出</button>
+                </div>
+            </div>
+            <div class="menu-grid">
+                <div class="menu-card" onclick="startMode('practice')">
+                    <h2>練習模式</h2>
+                    <p>每次 10 道題，思考超時給予提示，錯題自動收集。</p>
+                </div>
+                <div class="menu-card" onclick="startMode('challenge')">
+                    <h2>挑戰模式</h2>
+                    <p>無限挑戰，答錯即淘汰！難度遞增，挑戰排行榜最高榮譽。</p>
+                </div>
+                <div class="menu-card" onclick="startMode('mistake')">
+                    <h2>錯題集 <span id="mistake-count" style="color:#F17D7E;">(0)</span></h2>
+                    <p>針對弱點特訓，隨機出題，需連續答對兩次才能消滅錯題。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 測驗共用畫面 -->
+        <div class="container" id="quiz-view">
+            <div class="header">
+                <h1 id="quiz-title">模式載入中...</h1>
+                <button class="btn-secondary" onclick="endQuizEarly()">放棄並返回</button>
+            </div>
+            <div class="card">
+                <div class="quiz-header">
+                    <span id="quiz-progress">進度: 0/10</span>
+                    <span id="quiz-timer">0.0s</span>
+                </div>
+                <div class="equation-area">
+                    <span id="q-text">--</span> = <input type="number" id="ans-input" onkeypress="if(event.key==='Enter') submitAnswer()">
+                </div>
+                <div style="text-align: center;">
+                    <button class="btn-primary" onclick="submitAnswer()" id="submit-btn">提交答案</button>
+                </div>
+                <div class="alert-hint" id="alert-hint"></div>
+            </div>
+        </div>
+
+        <!-- 4. 結果與排行榜畫面 -->
+        <div class="container" id="result-view">
+            <div class="card result-box">
+                <h2 id="result-title">結算報告</h2>
+                <div class="result-score" id="result-score">8/10</div>
+                <p id="result-desc" style="color: #8f95b2;">錯題已自動加入錯題集。</p>
                 
-                <h4 style="margin: 0 0 10px 0; color: #a4abbe;">該生作答完整明細 (Raw Data)</h4>
-                <div class="scrollable-table-container">
-                    <table style="margin-top: 0;">
-                        <thead style="position: sticky; top: 0; z-index: 1;">
+                <div id="session-summary-section" style="margin-top: 30px; text-align: left; background: #1e2439; padding: 20px; border-radius: 8px;">
+                    <h3 style="margin-top:0; color:#F17D7E; font-size: 16px;">本次練習分類表現</h3>
+                    <table class="summary-table">
+                        <thead>
                             <tr>
-                                <th>題號</th>
-                                <th>題型</th>
-                                <th>題目內容</th>
-                                <th>學生答案</th>
-                                <th>結果</th>
-                                <th>作答時間</th>
+                                <th>題型類別</th>
+                                <th>作答數</th>
+                                <th>正確率</th>
+                                <th>平均耗時</th>
                             </tr>
                         </thead>
-                        <tbody id="teacher-student-raw-log">
-                            <tr><td colspan="6" class="empty-msg">請由上方選擇學生以檢視原始數據。</td></tr>
+                        <tbody id="session-summary-list">
                         </tbody>
                     </table>
                 </div>
 
+                <div class="leaderboard" id="leaderboard-section" style="display:none; margin-top: 20px;">
+                    <h3 style="margin-top:0; color:#F17D7E; font-size: 16px;">挑戰排行榜</h3>
+                    <div id="lb-list"></div>
+                </div>
+
+                <button class="btn-primary" style="margin-top: 30px;" onclick="switchView('student-menu')">返回主選單</button>
             </div>
+        </div>
+
+        <!-- 5. 教師數據儀表板 -->
+        <div class="container" id="teacher-dashboard">
+            <div class="header">
+                <h1>CLASSROOM LIVE DASHBOARD</h1>
+                <div class="user-info">
+                    <span>教師: <span id="display-teacher-name"></span></span>
+                    <button class="btn-secondary" onclick="switchView('login-view')">登出</button>
+                </div>
+            </div>
+            
+            <div class="stats-row">
+                <div class="stat-box">
+                    <h3>全班累積作答量</h3>
+                    <div class="val" id="t-total-attempts">0 題</div>
+                </div>
+                <div class="stat-box">
+                    <h3>全班平均正確率</h3>
+                    <div class="val" id="t-avg-accuracy">-- %</div>
+                </div>
+                <div class="stat-box">
+                    <h3>錯題本待清總量</h3>
+                    <div class="val" id="t-mistake-total">0 題</div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3 style="margin-top:0; color:#e74c3c;">需關注學生名單 (異常雷達)</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>學生姓名</th>
+                                <th>累積錯題數</th>
+                                <th>平均耗時</th>
+                                <th>預警標記</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacher-student-alerts">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-top:0;">全班弱點題型分析</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>題型類別</th>
+                                <th>總作答次數</th>
+                                <th>錯誤率</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacher-question-stats">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card" style="grid-column: 1 / -1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin:0;">學生個人學情診斷與作答明細</h3>
+                        <select id="student-selector" class="custom-select" onchange="renderStudentDetail()">
+                            <option value="">-- 請選擇學生 --</option>
+                        </select>
+                    </div>
+                    
+                    <table style="margin-bottom: 20px;">
+                        <thead>
+                            <tr>
+                                <th>題型類別</th>
+                                <th>該生作答總數</th>
+                                <th>個人正確率</th>
+                                <th>個人平均耗時</th>
+                                <th>系統診斷</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacher-student-detail">
+                            <tr><td colspan="5" class="empty-msg">請由右上方選擇學生以檢視各類題型分析。</td></tr>
+                        </tbody>
+                    </table>
+
+                    <hr style="border: 0; border-top: 1px dashed #364061; margin: 25px 0;">
+                    
+                    <h4 style="margin: 0 0 10px 0; color: #a4abbe;">該生作答完整明細 (Raw Data)</h4>
+                    <div class="scrollable-table-container">
+                        <table style="margin-top: 0;">
+                            <thead style="position: sticky; top: 0; z-index: 1;">
+                                <tr>
+                                    <th>題號</th>
+                                    <th>題型</th>
+                                    <th>題目內容</th>
+                                    <th>學生答案</th>
+                                    <th>結果</th>
+                                    <th>作答時間</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teacher-student-raw-log">
+                                <tr><td colspan="6" class="empty-msg">請由上方選擇學生以檢視原始數據。</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> 
+
+    <!-- 頁尾：已移除瀏覽區塊並縮減上下留白 -->
+    <div class="custom-footer">
+        <div class="footer-content">
+            <div class="footer-col" style="flex: 1.2;">
+                <div class="rp-logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#F17D7E"/>
+                        <circle cx="12" cy="12" r="2" fill="#4FA8D6" stroke="none"/>
+                    </svg>
+                    <span class="rp-red">Right</span><span class="rp-blue">Pick</span>
+                </div>
+                <p style="font-size: 12px; color: #a4abbe; font-weight: bold; margin-top: 10px;">為DSE學生的未來分析最適合選擇</p>
+            </div>
+            
+            <div class="footer-col" style="flex: 1; display: flex; flex-direction: column; align-items: flex-end;">
+                <div style="text-align: left; width: 100%; max-width: 320px;">
+                    <h4>聯絡我們</h4>
+                    <ul class="contact-info">
+                        <li><span style="color:#F17D7E;">◎</span> Workstation 15, Cyberport, 7/F - 8/F,<br>HS Centre, 5 Lok Yip Road, Fanling, NT</li>
+                        <li><span style="color:#F17D7E;">電話:</span> +852 56339157</li>
+                        <li><span style="color:#F17D7E;">電郵:</span> rp@rightpickhk.com</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>© 2026 <strong>RightPick</strong> All rights reserved</span>
+            <span>條款及細則</span>
         </div>
     </div>
 
@@ -381,7 +476,7 @@
     function nextQuestion() {
         ui.ansInput.value = '';
         ui.ansInput.disabled = false;
-        ui.ansInput.style.color = '#f3704b'; 
+        ui.ansInput.style.color = '#F17D7E'; 
         ui.submitBtn.disabled = false;
         ui.ansInput.focus();
         ui.hint.style.display = 'none';
@@ -592,7 +687,7 @@
                 let rankStr = index === 0 ? '第1名' : index === 1 ? '第2名' : index === 2 ? '第3名' : '-';
                 html += `<div class="lb-item">
                             <span>${rankStr} ${item.name}</span>
-                            <span style="color:#f3704b; font-weight:bold;">${item.score} 題</span>
+                            <span style="color:#F17D7E; font-weight:bold;">${item.score} 題</span>
                          </div>`;
             });
             document.getElementById('lb-list').innerHTML = html;
@@ -670,7 +765,7 @@
             if (alerts.length > 0 || data.mistakes >= 3) {
                 let avgTime = (data.totalTime / data.totalAttempts).toFixed(1);
                 studentHtml += `<tr>
-                    <td style="font-weight:bold; color:#f3704b;">${name}</td>
+                    <td style="font-weight:bold; color:#F17D7E;">${name}</td>
                     <td>${data.mistakes} 題</td>
                     <td>${avgTime} s</td>
                     <td>${alerts.length > 0 ? alerts.join('') : '<span style="color:#8f95b2;">需留意</span>'}</td>
